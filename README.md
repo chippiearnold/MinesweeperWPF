@@ -18,3 +18,5 @@ Microsoft Practices PRISM framework used primarily for INotifyPropertyChangeed i
 These are both nuget packages which will hopefully restore by themselves.
 
 Feel free to use this as you want!
+
+<img src="http://i.imgur.com/r2GDUPy.png">
