@@ -1,0 +1,174 @@
+﻿<Window x:Class="MineSweeper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Minesweeper"
+        ResizeMode="CanResize"
+        SizeToContent="WidthAndHeight"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        mc:Ignorable="d" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mineSweeper="clr-namespace:MineSweeper"
+        xmlns:converters="clr-namespace:MineSweeper.Converters"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        WindowStartupLocation="CenterScreen"        
+        d:DataContext="{d:DesignInstance Type=mineSweeper:MainWindowViewModel, IsDesignTimeCreatable=True}" 
+        Icon="minesweeper.ico">
+
+    <Window.Resources>
+        <converters:InvertableBooleanToVisibilityConverter x:Key="InvertedBoolToVis" />
+        <converters:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
+        <Style x:Key="MyButton" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="border" BorderThickness="0" BorderBrush="Black" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="LayoutRoot">
+        <!-- MINE COUNT, RESTART BUTTON AND GAME COUNTER -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition Height="*" MinHeight="255"/>
+                <RowDefinition Height="80"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding MinesLeft}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           FontSize="32"
+                           FontWeight="Bold"/>
+
+                <Button Grid.Column="1" Content="{Binding StartButtonContent}" Width="80" Height="40" FontSize="25" FontWeight="Bold" Command="{Binding RestartCommand}" />
+
+                <TextBlock Grid.Column="2" 
+                           Text="{Binding GameTime}"
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           FontSize="32"
+                           FontWeight="Bold"/>
+            </Grid>
+
+            <!-- MAIN PLAY AREA -->
+            <Grid Grid.Row="1" Background="#999977">
+                <ItemsControl ItemsSource="{Binding Tiles}" MinWidth="300" Margin="10,5">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="1" Background="#656565" MinWidth="{Binding CellSize}" MinHeight="{Binding CellSize}">
+                                <Grid Grid.Row="0">
+                                    <!-- BUTTON SHOWING SURROUNDING MINE COUNT -->
+                                    <Button Foreground="White" 
+                                            FontWeight="Bold" 
+                                            FontSize="16"
+                                            Background="Green"
+                                            Content="{Binding DisplayMineCount}" 
+                                            Visibility="{Binding IsMine, Converter={StaticResource InvertedBoolToVis}, ConverterParameter=Inverted}" 
+                                            Style="{StaticResource MyButton}">
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="MouseDoubleClick">
+                                                <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.DoubleClickCommand}"  CommandParameter="{Binding}" />
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </Button>
+
+                                    <!-- TEXTBLOCK SHOWING MINE -->
+                                    <Grid Visibility="{Binding IsMine, Converter={StaticResource InvertedBoolToVis}, ConverterParameter=Normal}">
+                                        <Grid.Style>
+                                            <Style TargetType="{x:Type Grid}">
+                                                <Setter Property="Background" Value="#656565"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding SelectedMine}" Value="True">
+                                                        <Setter Property="Background" Value="Red" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                        <TextBlock FontWeight="Bold"
+                                                   FontSize="16"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   Text="M">
+                                            <TextBlock.Style>
+                                                <Style TargetType="{x:Type TextBlock}">
+                                                    <Setter Property="Foreground" Value="Red"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SelectedMine}" Value="True">
+                                                            <Setter Property="Foreground" Value="Black" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Grid>
+
+                                <!-- COVERING BUTTON USER SELECTS TO UNCOVER -->
+                                <Button Content="{Binding Status}"
+                                        FontWeight="Bold"
+                                        FontSize="16"
+                                        Visibility="{Binding Covered, Converter={StaticResource InvertedBoolToVis}, ConverterParameter=Normal}" 
+                                        IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.GameOver, Converter={StaticResource InvertedBoolConverter}, ConverterParameter=Inverted}"
+                                        Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.UncoverTileCommand}" 
+                                        CommandParameter="{Binding}">
+                                    <Button.InputBindings>
+                                        <MouseBinding Gesture="RightClick" 
+                                                      Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.MarkTileCommand}"
+                                                      CommandParameter="{Binding}">
+                                        </MouseBinding>
+                                    </Button.InputBindings>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="{Binding Rows}" Columns="{Binding Columns}" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </Grid>
+            
+            <!-- GAME CONTROLS -->
+            <Grid Grid.Row="2" Margin="15,10" HorizontalAlignment="Left" IsEnabled="{Binding GameOver}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="120"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text ="Rows:" VerticalAlignment="Center" Margin="0,0,5,0" />
+                    <xctk:IntegerUpDown Width="70" Margin="0" FontSize="25" Increment="1" Maximum="100" Minimum="5" Text="{Binding Rows, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>                
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text ="Cols:" VerticalAlignment="Center" Margin="5,0,5,0" />
+                    <xctk:IntegerUpDown Width="70" Margin="0"  FontSize="25" Increment="1" Maximum="100" Minimum="5" Text="{Binding Columns, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />                    
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text ="Mines:" VerticalAlignment="Center" Margin="5,0,5,0" />
+                    <xctk:IntegerUpDown Width="70" Margin="0" FontSize="25" Increment="1" Maximum="{Binding MaxMines, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" Minimum="5" Text="{Binding Mines, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />                    
+                </StackPanel>               
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
