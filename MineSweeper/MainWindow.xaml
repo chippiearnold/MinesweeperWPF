@@ -14,7 +14,9 @@
         WindowStartupLocation="CenterScreen"        
         d:DataContext="{d:DesignInstance Type=mineSweeper:MainWindowViewModel, IsDesignTimeCreatable=True}" 
         Icon="minesweeper.ico">
-
+    <Window.DataContext>
+        <mineSweeper:MainWindowViewModel/>
+    </Window.DataContext>
     <Window.Resources>
         <converters:InvertableBooleanToVisibilityConverter x:Key="InvertedBoolToVis" />
         <converters:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
